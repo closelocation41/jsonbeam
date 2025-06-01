@@ -1,0 +1,10 @@
+[
+  {
+    "_id": 0,
+    "firstName": "sandeep",
+    "lastName": "Kumar",
+    "email": "sandeep@example.com",
+    "age": "30",
+    "createdAt": "2025-06-01T18:19:56.311Z"
+  }
+]

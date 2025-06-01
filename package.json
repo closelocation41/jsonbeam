@@ -1,0 +1,50 @@
+{
+  "name": "jsonbeam",
+  "version": "1.0.0",
+  "description": " (JSON Database) - A JSON-based local database.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "jsonbeam": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "readme.md",
+    "prompt.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "json",
+    "database",
+    "local",
+    "db",
+    "cli",
+    "typescript"
+  ],
+  "author": "sandeep",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/closelocation41/jsonbeam.git"
+  },
+  "homepage": "https://github.com/closelocation41/jsonbeam#readme",
+  "bugs": {
+    "url": "https://github.com/closelocation41/jsonbeam/issues"
+  },
+  "dependencies": {
+    "commander": "^14.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "mingo": "^6.6.1",
+    "stream-json": "^1.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.23",
+    "@types/stream-json": "^1.7.8",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

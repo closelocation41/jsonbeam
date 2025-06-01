@@ -1,0 +1,29 @@
+[
+  {
+    "username": "admin",
+    "password": "admin",
+    "roles": [
+      "admin"
+    ],
+    "permissions": [
+      "read",
+      "write",
+      "full"
+    ],
+    "database": "admin_db",
+    "dbDir": "C:\\workspace\\development\\Nodejs\\JSANDB\\jsonbeam\\admin_db"
+  },
+  {
+    "username": "admin1",
+    "password": "admin1",
+    "roles": [
+      "user"
+    ],
+    "permissions": [
+      "read",
+      "write"
+    ],
+    "database": "post_db",
+    "dbDir": "C:\\workspace\\development\\Nodejs\\JSANDB\\jsonbeam\\post_db"
+  }
+]

@@ -52,12 +52,21 @@ const fs_1 = require("fs");
 const stream_json_1 = require("stream-json");
 const StreamArray_1 = require("stream-json/streamers/StreamArray");
 const stream_chain_1 = require("stream-chain");
+const core_1 = require("mingo/core");
+const pipelineOperators = __importStar(require("mingo/operators/pipeline"));
+const accumulatorOperators = __importStar(require("mingo/operators/accumulator"));
+const expressionOperators = __importStar(require("mingo/operators/expression"));
+const queryOperators = __importStar(require("mingo/operators/query"));
+(0, core_1.useOperators)(core_1.OpType.PIPELINE, pipelineOperators);
+(0, core_1.useOperators)(core_1.OpType.ACCUMULATOR, accumulatorOperators);
+(0, core_1.useOperators)(core_1.OpType.EXPRESSION, expressionOperators);
+(0, core_1.useOperators)(core_1.OpType.QUERY, queryOperators);
 // write all model class functions names
 // insert, find, findOne, update, delete, count, aggregate, filter, all, paginate, getAll, findOneAndUpdate, findOneAndDelete, distinct, project, findOneAndReplace
 class Model {
     constructor(filePath, schema) {
         // Always include _id as a default field in the schema
-        this.schema = Object.assign({ _id: { type: "number" } }, schema);
+        this.schema = Object.assign({ _id: { type: "string" } }, schema);
         this.filePath = filePath;
     }
     /** Normalize an object to match the schema (remove extra fields, set missing to undefined) */
@@ -80,9 +89,9 @@ class Model {
                 records = [];
             }
             const newRecords = Array.isArray(data) ? data : [data];
-            const normalizedRecords = newRecords.map((rec, idx) => {
-                // Assign _id as the next index value
-                const _id = records.length + idx;
+            const normalizedRecords = newRecords.map((rec) => {
+                // Generate a random unique string for _id
+                const _id = cryptoRandomId();
                 return Object.assign(Object.assign({}, this.normalizeToSchema(rec)), { _id });
             });
             records.push(...normalizedRecords);
@@ -325,8 +334,12 @@ class Model {
         });
     }
     /** Paginate records */
-    paginate(query, page, pageSize) {
-        return __awaiter(this, void 0, void 0, function* () {
+    /** Paginate records */
+    paginate(query_1) {
+        return __awaiter(this, arguments, void 0, function* (query, page = 1, pageSize = 10) {
+            // Defensive: ensure page and pageSize are numbers and valid
+            page = typeof page === "number" && page > 0 ? page : 1;
+            pageSize = typeof pageSize === "number" && pageSize > 0 ? pageSize : 10;
             const mingoQuery = new mingo_1.default.Query(query);
             let fileContent;
             try {
@@ -586,3 +599,9 @@ class Model {
     }
 }
 exports.Model = Model;
+function cryptoRandomId() {
+    // Generate a random 16-byte hex string (32 chars)
+    return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+}

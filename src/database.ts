@@ -15,7 +15,7 @@ export class Database {
         this.models = {};
     }
 
-    createModel<T>(modelName: string, schema: Record<string, { type: string }>): Model<T> {
+    createModel<T>(modelName: string, schema: Record<string, { type: "string" | "number" | "boolean" | "object" | "array" }>): Model<T> {
         const filePath = path.join(this.dbPath, `${modelName}.json`);
         if (!fs.existsSync(filePath)) fs.writeFileSync(filePath, JSON.stringify([]));
         this.models[modelName] = new Model<T>(filePath, schema);

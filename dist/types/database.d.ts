@@ -5,7 +5,7 @@ export declare class Database {
     models: Record<string, Model<any>>;
     constructor(name: string);
     createModel<T>(modelName: string, schema: Record<string, {
-        type: string;
+        type: "string" | "number" | "boolean" | "object" | "array";
     }>): Model<T>;
     listModels(): string[];
     deleteModel(modelName: string): boolean;

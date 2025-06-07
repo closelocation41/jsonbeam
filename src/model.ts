@@ -7,6 +7,19 @@ import { join } from "path";
 import { parser } from "stream-json";
 import { streamArray } from "stream-json/streamers/StreamArray";
 import { chain } from "stream-chain";
+
+import { useOperators, OpType } from "mingo/core";
+import * as pipelineOperators from "mingo/operators/pipeline";
+import * as accumulatorOperators from "mingo/operators/accumulator";
+import * as expressionOperators from "mingo/operators/expression";
+import * as queryOperators from "mingo/operators/query";
+import { $group } from "mingo/operators/pipeline";
+
+useOperators(OpType.PIPELINE, pipelineOperators);
+useOperators(OpType.ACCUMULATOR, accumulatorOperators);
+useOperators(OpType.EXPRESSION, expressionOperators);
+useOperators(OpType.QUERY, queryOperators);
+
 // write all model class functions names
 // insert, find, findOne, update, delete, count, aggregate, filter, all, paginate, getAll, findOneAndUpdate, findOneAndDelete, distinct, project, findOneAndReplace
 export class Model<T> {
@@ -15,7 +28,7 @@ export class Model<T> {
 
     constructor(filePath: string, schema: Record<string, { type: string }>) {
         // Always include _id as a default field in the schema
-        this.schema = { _id: { type: "number" }, ...schema };
+        this.schema = { _id: { type: "string" }, ...schema };
         this.filePath = filePath;
     }
 
@@ -38,9 +51,9 @@ export class Model<T> {
             records = [];
         }
         const newRecords = Array.isArray(data) ? data : [data];
-        const normalizedRecords = newRecords.map((rec, idx) => {
-            // Assign _id as the next index value
-            const _id = records.length + idx;
+        const normalizedRecords = newRecords.map((rec) => {
+            // Generate a random unique string for _id
+            const _id = cryptoRandomId();
             return { ...this.normalizeToSchema(rec), _id };
         });
         records.push(...normalizedRecords);
@@ -205,19 +218,19 @@ export class Model<T> {
     }
 
     /** Aggregate records using Mingo (streaming, memory efficient) */
-    async aggregate(pipeline: any[]): Promise<any[]> {
-        let records: T[] = [];
-        try {
-            const fileContent = await fsPromises.readFile(this.filePath, "utf-8");
-            const trimmed = fileContent.trim();
-            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-                records = JSON.parse(trimmed).map((rec: any) => this.normalizeToSchema(rec));
-            }
-        } catch {
-            records = [];
+  async aggregate(pipeline: any[]): Promise<any[]> {
+    let records: T[] = [];
+    try {
+        const fileContent = await fsPromises.readFile(this.filePath, "utf-8");
+        const trimmed = fileContent.trim();
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            records = JSON.parse(trimmed).map((rec: any) => this.normalizeToSchema(rec));
         }
-        return mingo.aggregate(records, pipeline);
+    } catch {
+        records = [];
     }
+    return mingo.aggregate(records, pipeline);
+}
 
     /** Filter records using query (streaming, memory efficient) */
     async filter(query: Partial<T>): Promise<T[]> {
@@ -257,35 +270,44 @@ export class Model<T> {
     }
 
     /** Paginate records */
-    async paginate(query: Partial<T>, page: number, pageSize: number): Promise<{ data: T[]; total: number; page: number; pageSize: number }> {
-        const mingoQuery = new mingo.Query(query);
-        let fileContent: string;
-        try {
-            fileContent = await fsPromises.readFile(this.filePath, "utf-8");
-        } catch {
-            return { data: [], total: 0, page, pageSize };
-        }
-        if (!fileContent.trim()) return { data: [], total: 0, page, pageSize };
+   /** Paginate records */
+async paginate(
+    query: Partial<T>,
+    page: number = 1,
+    pageSize: number = 10
+): Promise<{ data: T[]; total: number; page: number; pageSize: number }> {
+    // Defensive: ensure page and pageSize are numbers and valid
+    page = typeof page === "number" && page > 0 ? page : 1;
+    pageSize = typeof pageSize === "number" && pageSize > 0 ? pageSize : 10;
 
-        let records: any[] = [];
-        try {
-            const trimmed = fileContent.trim();
-            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-                records = JSON.parse(trimmed);
-            } else {
-                return { data: [], total: 0, page, pageSize };
-            }
-        } catch {
-            return { data: [], total: 0, page, pageSize };
-        }
-
-        const filtered = records.filter((record) => mingoQuery.test(record));
-        const total = filtered.length;
-        const start = (page - 1) * pageSize;
-        const end = start + pageSize;
-        const data = filtered.slice(start, end).map((rec) => this.normalizeToSchema(rec));
-        return { data, total, page, pageSize };
+    const mingoQuery = new mingo.Query(query);
+    let fileContent: string;
+    try {
+        fileContent = await fsPromises.readFile(this.filePath, "utf-8");
+    } catch {
+        return { data: [], total: 0, page, pageSize };
     }
+    if (!fileContent.trim()) return { data: [], total: 0, page, pageSize };
+
+    let records: any[] = [];
+    try {
+        const trimmed = fileContent.trim();
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            records = JSON.parse(trimmed);
+        } else {
+            return { data: [], total: 0, page, pageSize };
+        }
+    } catch {
+        return { data: [], total: 0, page, pageSize };
+    }
+
+    const filtered = records.filter((record) => mingoQuery.test(record));
+    const total = filtered.length;
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    const data = filtered.slice(start, end).map((rec) => this.normalizeToSchema(rec));
+    return { data, total, page, pageSize };
+}
 
     async getAll(): Promise<T[]> {
         return new Promise<T[]>((resolve, reject) => {
@@ -497,4 +519,11 @@ export class Model<T> {
         return replacedRecord;
     }
     
+}
+
+function cryptoRandomId(): string {
+    // Generate a random 16-byte hex string (32 chars)
+    return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
 }

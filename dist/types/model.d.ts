@@ -27,7 +27,8 @@ export declare class Model<T> {
     /** Get all records (use with caution for large files) */
     all(): Promise<T[]>;
     /** Paginate records */
-    paginate(query: Partial<T>, page: number, pageSize: number): Promise<{
+    /** Paginate records */
+    paginate(query: Partial<T>, page?: number, pageSize?: number): Promise<{
         data: T[];
         total: number;
         page: number;

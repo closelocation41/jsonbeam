@@ -16,13 +16,13 @@ async function db() {
 
     // connect to the database
 
-    await jsonbeam.createDatabase({
-        database: 'post_db',
+    // await jsonbeam.createDatabase({
+    //     database: 'post_db',
 
-        username: 'admin1',
+    //     username: 'admin1',
 
-        password: 'admin1'
-    });
+    //     password: 'admin1'
+    // });
 
     try {
         database = await jsonbeam.connect({
